@@ -1,0 +1,224 @@
+This file is the GSL bug tracking system.  The CVS version of this
+file should be kept up-to-date.
+
+----------------------------------------------------------------------
+BUG#1 -- gsl_sf_hyperg_2F1_e fails for some arguments 
+
+From: keith.briggs@bt.com
+To: gsl-discuss@sources.redhat.com
+Subject: gsl_sf_hyperg_2F1 bug report
+Date: Thu, 31 Jan 2002 12:30:04 -0000
+
+gsl_sf_hyperg_2F1_e fails with arguments (1,13,14,0.999227196008978,&r).
+It should return 53.4645... .
+
+#include <gsl/gsl_sf.h>
+#include <stdio.h>
+
+int main (void)
+{
+  gsl_sf_result r;
+  gsl_sf_hyperg_2F1_e (1,13,14,0.999227196008978,&r);
+  printf("r = %g %g\n", r.val, r.err);
+}
+
+NOTES: The program overflows the maximum number of iterations in
+gsl_sf_hyperg_2F1, due to the presence of a nearby singularity at
+(c=a+b,x=1) so the sum is slowly convergent.
+
+The exact result is 53.46451441879150950530608621 as calculated by
+gp-pari using sumpos(k=0,gamma(a+k)*gamma(b+k)*gamma(c)*gamma(1)/
+(gamma(c+k)*gamma(1+k)*gamma(a)*gamma(b))*x^k)
+
+The code needs to be extended to handle the case c=a+b. This is the
+main problem. The case c=a+b is special and needs to be computed
+differently.  There is a special formula given for it in Abramowitz &
+Stegun 15.3.10
+
+As reported by Lee Warren <warren@atom.chem.utk.edu> another set of
+arguments which fail are:
+
+#include <gsl/gsl_sf.h>
+#include <stdio.h>
+
+int main (void)
+{
+  gsl_sf_result r;
+  gsl_sf_hyperg_2F1_e (-1, -1, -0.5, 1.5, &r);
+  printf("r = %g %g\n", r.val, r.err);
+}
+
+The correct value is -2.
+
+----------------------------------------------------------------------
+
+BUG#5 -- broken error terms for implicit odes 
+
+The error terms for the implicit ode integrators are broken.  They
+have 'FIXME' entries still in the code.  Only the bsimp error term is
+implemented.
+
+----------------------------------------------------------------------
+
+BUG#8 -- inexact coefficients in rk8pd.c 
+
+From: Luc Maisonobe <Luc.Maisonobe@c-s.fr>
+To: gsl-discuss@sources.redhat.com
+Subject: further thoughts about Dormand-Prince 8 (RK8PD)
+Date: Wed, 14 Aug 2002 10:50:49 +0200
+
+I was looking for some references concerning Runge-Kutta methods when I
+noticed GSL had an high order one. I also found a question in the list
+archive (April 2002) about the references of this method which is
+implemented in rk8pd.c. It was said the coefficients were taken from the
+"Numerical Algorithms with C" book by Engeln-Mullges and Uhlig.
+
+I have checked the coefficients somewhat with a little java tool I have
+developped (see http://www.spaceroots.org/archive.htm#RKCheckSoftware)
+and found they were not exact. I think this method is really the method
+that is already in rksuite (http://www.netlib.org/ode/rksuite/) were the
+coefficients are given as real values with 30 decimal digits. The
+coefficients have probably been approximated as fractions later on.
+However, these approximations are not perfect, they are good only for
+the first 16 or 18 digits depending on the coefficient.
+
+This has no consequence for practical purposes since they are stored in
+double variables, but give a false impression of beeing exact
+expressions. Well, there are even some coefficients that should really
+be rational numbers but for which wrong numerators and denominators are
+given. As an example, the first and fourth elements of the b7 array are
+given as 29443841.0 / 614563906.0 and 77736538.0 / 692538347, hence the
+sum off all elements of the b7 array (which should theoretically be
+equal to ah[5]) only approximate this. For these two coefficients, this
+could have been avoided using  215595617.0 / 4500000000.0 and
+202047683.0 / 1800000000.0, which also looks more coherent with the
+other coefficients.
+
+The rksuite comments say this method is described in this paper :
+
+   High Order Embedded Runge-Kutta Formulae
+   P.J. Prince and J.R. Dormand
+   J. Comp. Appl. Math.,7, pp. 67-75, 1981
+
+It also says the method is an 8(7) method (i.e. the coefficients set
+used to advance integration is order 8 and error estimation is order 7).
+If I use my tool to check the order, I am forced to check the order
+conditions numerically with a tolerance since I do not have an exact
+expression of the coefficients. Since even if some conditions are not
+mathematically met, the residuals are small and could be below the
+tolerance. There are tolerance values for which such numerical test
+dedeuce the method is of order 9, as is said in GSL. However, I am not
+convinced, there are to few parameters for the large number of order
+conditions needed at order 9.
+
+I would suggest to correct the coefficients in rk8pd.c (just put the
+literal constants of rksuite) and to add the reference to the article.
+
+----------------------------------------------------------------------
+BUG#10 -- gsl_sf_fermi_dirac_int error estimates 
+
+Some of the error estimates on gsl_sf_fermi_dirac_int are much too
+large.  The value itself is pretty accurate.
+
+In the test_sf_result you need to work in something like
+
+  if(r.err > 1.0e5 * (fabs(r.val - val) + GSL_DBL_EPSILON * fabs(val)))
+        s |= TEST_SF_INCONS;   /* error estimate too large */
+
+in addition to the existing
+
+   if(fabs(val - r.val) > 2.0*r.err) s |= TEST_SF_INCONS;
+
+to catch those.  
+
+#include<stdio.h>
+#include<gsl/gsl_errno.h>
+#include<gsl/gsl_sf.h>
+
+int main() {
+  gsl_sf_result r;
+  int status;
+
+  status = gsl_sf_fermi_dirac_int_e (9, 500.0, &r);
+  printf("FD_9(500) = %.18e +- %.18e\n", r.val, r.err);
+}
+
+result,
+
+FD_9(500) = 2.692738498426942915e+20 +- 2.629627439870118259e+47
+
+Exact     = 2.692738498...e+20
+
+----------------------------------------------------------------------
+BUG#14 -- qagil
+
+The extrapolation used in qags gives negative results when integrating
+the small tails of probability distributions using qagil, even though
+each individual term in the sequence is positive and increasing (!).
+This is a feature of the original quadpack and appears to be due to
+the extrapolation algorithm, which should probably be tweaked to avoid
+this undesirable behavior.
+
+----------------------------------------------------------------------
+BUG#17 -- ode failures
+
+When an ODE function returns an error code the higher level ode
+functions should recover transparently and not modify the state, so
+that the step can be retried cleanly with a different value of h.
+Currently the solver may partially modify the state, if the error
+occurs in the middle of an RK step calculation for example.
+
+----------------------------------------------------------------------
+BUG#18 -- R250 discrepancy, and initialisation in R250 / GSFR4
+
+This bug report is correct. The original paper has the same discrepancy.
+
+From: Andreas Schneider <1@c07.de>
+To: bug-gsl@gnu.org
+Subject: [Bug-gsl] Wrong algorithm in gsl_rng_r250
+Date: Sun, 25 Apr 2004 13:23:39 +0200
+
+The documentation claims that gsl_rng_r250 does
+
+   x_n = x_{n-103} ^ x_{n-250},
+
+but actually the implementation does
+
+   x_n = x_{n-147} ^ x_{n-250}.
+
+This error seems to be very common. It must have been introduced long time ago.
+
+I fed some data from both variants into Marsaglia's diehard and found that the 
+documented version is better in most tests. Thus the error is probably in the 
+implementation and the documentation is right.
+
+The orthogonalisation routine for R250 is different from the original
+paper (it should be k=7*i+3 instead of k=7+i*3)
+
+Also in the initialisation of GSFR, the initial lower 6695 indices
+never participate in calculations of subsequent random numbers, so the
+"orthogonalisation" has no effect.  Check whether this also affects
+R250.
+
+----------------------------------------------------------------------
+BUG#20 -- seg fault from gsl_sf_legendre_sphPlm_e (underflow)
+
+In the following bit of code, the first call works, but the second call 
+fails with an internal underflow gsl: exp.c:541: ERROR: underflow
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <gsl/gsl_sf_legendre.h>
+
+int main() {
+  gsl_sf_result y;
+  gsl_sf_legendre_sphPlm_e(140,135,1,&y);
+  gsl_sf_legendre_sphPlm_e(140,135,0.99998689456491752,&y);
+  return(0);
+}
+
+Reported by "Kevin M. Huffenberger" <khuffenb@Princeton.EDU>
+----------------------------------------------------------------------
+
+
