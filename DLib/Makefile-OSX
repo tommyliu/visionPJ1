@@ -1,0 +1,33 @@
+SRCFILES = DColorCluster.cpp DImageIO.cpp DLabelComponents.cpp DPoint.cpp DDiagMatrix.cpp DIntegralImage.cpp DMatrix.cpp DrawText.cpp DGaussianPyramid.cpp DistanceTransform.cpp DPlane.cpp DRect.cpp DImage.cpp DBoxMinTransform.cpp DMultiDMatrix.cpp
+
+OBJECTS = DColorCluster.o DImageIO.o DLabelComponents.o DPoint.o DDiagMatrix.o DIntegralImage.o DMatrix.o DrawText.o DGaussianPyramid.o DistanceTransform.o DPlane.o DRect.o DImage.o DBoxMinTransform.o DMultiDMatrix.o
+
+host-type = $(shell arch)
+
+#ifeq ($(host-type),i386)
+CCOPTS = -O3 -L/opt/local/lib -I/opt/local/include 
+#else
+#	CCOPTS = -funroll-loops -march=pentium4 -mfpmath=sse,387 -msse2
+#endif
+
+
+.SUFFIXES: .o .cpp
+
+.cpp.o:
+	g++ -DGSL_SUPPORT -I . -o $@ -c $< -I/opt/local/include $(CCOPTS) -O3 -funroll-loops -ffast-math -msse3
+	g++ -DGSL_SUPPORT -I . -o p3/$@ -c $< -I/opt/local/include -O3 -funroll-loops -msse
+	g++ -DGSL_SUPPORT -I . -o db/$@ -c $< -I/opt/local/include -g
+	g++ -DGSL_SUPPORT -I . -o pg/$@ -c $< -I/opt/local/include -g -pg
+
+all: libDLib.a 
+
+
+libDLib.a: $(OBJECTS)
+	ar rs libDLib.a $(OBJECTS)
+	ar rs libDLib_p3.a p3/*.o
+	ar rs libDLib_db.a db/*.o
+	ar rs libDLib_pg.a pg/*.o
+
+
+clean:
+	rm *.o *.a
