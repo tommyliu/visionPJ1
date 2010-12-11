@@ -13,10 +13,11 @@
 function model = foregroundModel(training_file, edges_folder, t)
 
 model = {};
+num_parts = 6;
 
 % get part locations
 [part_locations, edges_file] = getPartLocations(training_file);
-edges_file
+% edges_file
 
 % process each image
 
