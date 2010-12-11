@@ -1,31 +1,36 @@
-dataDirect = '../train_edges';
-fname = '../motorbike_training';
-file = sprintf('%s.dat', fname);
+% ----------------------------------------------------------------------- %
+% SCRIPT CONFIGURATION 
+%
+% [NOTE]
+% The edge maps should have been generated previously. The function runEdge 
+% generates the map for a given image. The script runEdgeInFolder can be
+% used to generate the edges for a bunch of images inside a folder.
+% ----------------------------------------------------------------------- %
 
-% fp=fopen(file, 'r');
-% 
-% part_locations = [];
-% while(feof(fp) ~= 1)
-%     part_coord = zeros(6,2);
-%     fbasename = fgets(fp);%basename for file
-%     fgets(fp);%file path and name
-%     fgets(fp);%likelihood
-%     fgets(fp);%just 6 2 all the time
-%     num_parts =6;
-%     fprintf(fbasename);
-%     for i=1:num_parts
-%         part_coord(i,:) = str2num(fgets(fp));
-%     end
-%     fgets(fp);%blank line
-%     
-%     part_locations = cat(3,part_locations, part_coord);
-% %     sprintf('%s/%s.dat', dataDirect, fbasename(1:end-2))
-% %     Z = readEdges(sprintf('%s/%s.dat', dataDirect, fbasename(1:end-2)));
-% %     
-% %     imagesc(Z)
-%     
-% end  %end of while
-% fclose(fp);
+training_dat = '../motorbike_training.dat';
+training_edges = '/tmpVisionPJ/train_edges';
+background_edges = '/tmpVisionPJ/background_edges';
+template_size = 50;
 
-part_locations = getPartLocations(file);
+% ----------------------------------------------------------------------- %
+% SPATIAL MODEL
+% ----------------------------------------------------------------------- %
+
+display('Train spatial model');
+tStartS = tic;
+part_locations = getPartLocations(training_dat);
 [sigma, mu] = train_kfan(part_locations);
+display(sprintf('(elapsed_time: %.2f)', toc(tStartS)));
+
+% ----------------------------------------------------------------------- %
+% APPEREANCE MODEL
+% ----------------------------------------------------------------------- %
+
+display('Train appereance model');
+tStartA = tic;
+bg_model = backgroundModel(background_edges);
+fg_model = foregroundModel(training_dat, training_edges, template_size);
+display(sprintf('(elapsed_time: %.2f)', toc(tStartA)));
+
+display(sprintf('(total learning time: %.2f)', toc(tStartS)));
+

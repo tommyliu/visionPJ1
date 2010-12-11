@@ -1,4 +1,4 @@
-% Generate background model
+% Generate background appereance model
 %
 % model = backgroundModel(background_edges)
 %   edges_folder     - path to background edges folder
@@ -24,6 +24,7 @@ for file_id=1:size(edges,1)
     % get edges mat
     edges_image = readEdges(fullfile(edges_folder,edge_mat));
 
+    % count edges distribution
     for e=1:16
        model(e) = sum(sum(edges_image == e-1));
     end
@@ -32,7 +33,7 @@ for file_id=1:size(edges,1)
     
 end
 
-display(sprintf('Processed %d edge maps',num_edges));
+display(sprintf('\tProcessed %d images for the background model',num_edges));
 
 % turn the edges distribution into a probability function
 model = model/sum(model);
