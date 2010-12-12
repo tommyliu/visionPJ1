@@ -4,8 +4,20 @@ imgs = double(imgs);
 [h,w,k] = size(imgs);
 BSIZE =10;
 costmaps = zeros(h,w,k);
-for i=1:k
-    costmaps(:,:,i) = conv2(imgs(:,:,i),fspecial('gaussian',BSIZE,3),'same');
+
+costmaps(:,:,1) = imgs(:,:,1);
+
+for i=2:k
+        
+%     sigmax = real(log(sigmas(2,2,i)))*3.0;
+%     sigmay = real(log(sigmas(1,1,i)))*3.0;
+    sigmax = real(log(sigmas(2,2,i)));
+    sigmay = real(log(sigmas(1,1,i)));
+
+    costmaps(:,:,i) = ...
+    conv2(conv2(imgs(:,:,i),normpdf(-3*sigmax:3*sigmax,0,sigmax),'same'),...
+        normpdf(-3*sigmay:3*sigmay,0,sigmay)','same');
+%     costmaps(:,:,i) = conv2(imgs(:,:,i),fspecial('gaussian',BSIZE,3),'same');
 end
 
 
