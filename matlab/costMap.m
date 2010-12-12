@@ -34,22 +34,21 @@ end
 the_map = zeros(M,N,num_parts);
 for p=3:3
     
-   for r=t/2+1:M-t/2
-      for c=t/2+1:N-t/2
-         
+   for r=1:M
+      for c=1:N
           
-          top_row = max(-t/2,t/2-r)+1;
-          bottom_row = min(t/2,M-r-t/2);
-          left_col = max(-t/2,t/2-c)+1;
-          right_col = min(t/2,N-c-t/2);
+          top_row = max(1,t/2-r+1);
+          bottom_row = t + min(0,(M-r)-t/2);
+          left_col = max(1,t/2-c+1);
+          right_col = t + min(0,(N-c)-t/2);
    
-          
           g = 0;
           
-          for t_r = 1:t
-             for t_c = 1:t
-                
-                 this_orientation = test_image(r-t/2+t_r,c-t/2+t_c);
+          
+          for t_r = top_row:bottom_row
+             for t_c = left_col:right_col
+                 
+                 this_orientation = test_image(t_r-t/2+r,t_c-t/2+c);
                  if (this_orientation == 0), continue; end;
                  
                  g = g + fgModel{p}(t_r,t_c,this_orientation+1) - ...
