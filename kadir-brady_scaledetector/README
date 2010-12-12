@@ -1,0 +1,54 @@
+Kadir/Brady Feature Detector (Scale Saliency) Version 1.5
+For non commercial purposes only.
+Copyright Timor Kadir 1998-2004.
+ 
+To compile use the Makefile or type
+
+mex -O -DFASTPLOG CalcEntropyScalesOpt.c Hists.c -output CalcScaleSaliency
+
+For an example of how to use the binaries run GoSalScale at the matlab prompt. The output should be the same as image_0001_out.jpg.
+
+1) CalcScaleSaliency 
+
+This function finds the salient points in an image.
+
+Usage:
+
+Y=CalcScaleSaliency(uint8(double(Im)./div),StartScale,StopScale, Nbins, Sigma,AA);
+
+Im : input image (can be 8-bit grey-level, 2D 8-bit e.g. UV, 3D 8-bit e.g. RGB)
+Nbins : number of bins for histogram 
+div : 256/NBINS
+Sigma : sigma of kernel for Parzen estimator (set NBINS to 0)
+StartScale : Minimum scale
+StopScale : Maximum scale
+AA : Use anti-aliased sampling for generating the histograms (see Kadir, Zisserman and Brady ECCV 2004).
+
+Scale means the radius of the circle.  The function expects the image to be quantised to the number of bins specified.  To do that we just divide by 256/nbins.
+
+The output, Y, is a list of points in the following format:
+
+X Position
+Y Position
+Scale
+Entropy (HD)
+Inter-scale saliency (WD)
+Scale Saliency (YD)
+
+2) GreedyCluster
+
+Usage :
+
+C=GreedyCluster(Y,wt,yt)
+
+Y : List of salient features from CalcScaleSaliency
+wt : Threshold on inter-scale saliency (WD)
+yt : Threshold on saliency (YD)
+
+This, as its name implies, is a greedy clusterer which starts with the highest saliency feature and works down removing any features that are too `close' in x,y,s.  Here, close means within the support of the current feature i.e its diameter. Its written in matlab so can be modified easily.
+
+GreedyCluster has two parameters : Yt a global saliency threshold and Wt a global inter-scale saliency threshold (set between 0 and 2).  Setting the later high forces the selection of features that are more scale-localised or isotropic.
+
+The output, C, is a list of clustered salient regions in the same format as above.
+
+

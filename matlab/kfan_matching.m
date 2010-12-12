@@ -5,7 +5,7 @@ dist_part = 1;
 
 dt_images = costmaps;%Something something sigma
 
-best_cost = -1e-100;
+best_cost = -1e100;
 for i=1:h
     for j=1:w
         

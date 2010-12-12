@@ -22,20 +22,24 @@ for p=1:num_parts, fgModel{p} = fgModel{p}+1e-10; end
 
 % compute logs over appereance models
 bgModel = log(bgModel);
-assert(sum(isnan(bgModel)) == 0);
 
 for p=1:num_parts, 
     fgModel{p}(:,:,:) = log(fgModel{p}(:,:,:));
-    assert(sum(sum(sum(isnan(fgModel{p}(:,:,:))))) == 0); 
-    assert(sum(sum(sum(isinf(fgModel{p}(:,:,:))))) == 0); 
+%     fgModel{p}(:,:,1) = zeros(t,t);
 end
 
 
 the_map = zeros(M,N,num_parts);
-for p=3:3
+
+tStart = tic;
+for p=1:num_parts
+    
+    fprintf('hazah %d\n', p);
     
    for r=1:M
       for c=1:N
+          
+          %if (test_image(r,c) == 0), continue; end 
           
           top_row = max(1,t/2-r+1);
           bottom_row = t + min(0,(M-r)-t/2);
@@ -44,27 +48,69 @@ for p=3:3
    
           g = 0;
           
+          orientations = ...
+              test_image(top_row-t/2+r:bottom_row-t/2+r, ...
+                         left_col-t/2+c:right_col-t/2+c);
           
-          for t_r = top_row:bottom_row
-             for t_c = left_col:right_col
-                 
-                 this_orientation = test_image(t_r-t/2+r,t_c-t/2+c);
-                 if (this_orientation == 0), continue; end;
-                 
-                 g = g + fgModel{p}(t_r,t_c,this_orientation+1) - ...
-                    bgModel(this_orientation+1);
-                 
-             end
+          for d = 2:16
+              
+              fg = fgModel{p}(top_row:bottom_row,left_col:right_col,d);
+              g = g + sum(fg(orientations == d-1)) - bgModel(d)*sum(sum(orientations == d-1));
+              
           end
           
-          the_map(r,c) = g;
+          the_map(r,c,p) = g;
           
       end
    end
    
-   fprintf('part %d', p);
+   fprintf('elapsed time: %.2f\n', toc(tStart));
    
 end
+
+% BEFORE FOR THE MAPS
+% 00000000000000000000000000000000000000000000000000000000000000000000000 %
+% 
+% tStart = tic;
+% the_map = zeros(M,N,num_parts);
+% for p=1:num_parts
+%     
+%     fprintf('hazah %d\n', p);
+%     the_map(:,:,p) = -log;
+%     
+%    for r=1:M
+%       for c=1:N
+%           
+%           if (test_image(r,c) == 0), continue; end 
+%           
+%           top_row = max(1,t/2-r+1);
+%           bottom_row = t + min(0,(M-r)-t/2);
+%           left_col = max(1,t/2-c+1);
+%           right_col = t + min(0,(N-c)-t/2);
+%    
+%           g = 0;
+%           
+%           orientations = ...
+%               test_image(top_row-t/2+r:bottom_row-t/2+r, ...
+%                          left_col-t/2+c:right_col-t/2+c);
+%           
+%           for d = 1:16
+%               
+%               fg = fgModel{p}(top_row:bottom_row,left_col:right_col,d);
+%               g = g + sum(fg(orientations == d-1)) - bgModel(d)*sum(sum(orientations == d-1));
+%               
+%           end
+%           
+%           the_map(r,c,p) = g;
+%           
+%       end
+%    end
+%    
+%    fprintf('elapsed time: %.2f\n', toc(tStart));
+%    
+% end
+% 
+% 00000000000000000000000000000000000000000000000000000000000000000000000 %
 
 % % compute back probs
 % fgBackProbs = {};
