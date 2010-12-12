@@ -27,7 +27,7 @@ imid = 0;
 for file_id=1:length(edges_file)    
     
     % read edges
-    edges_path = fullfile(edges_file{file_id});
+    edges_path = edges_file{file_id};
     edges = readEdges(edges_path);
     [M,N] = size(edges);    
     
@@ -36,10 +36,10 @@ for file_id=1:length(edges_file)
         location = part_locations(p,:,file_id);
         
         % extract feature window
-        t_row = max(location(1)-mid_feat+1,1);    % top row
-        b_row = min(location(1)+mid_feat,M);  % bottom row
+        t_row = max(location(1)-mid_feat+1,1);      % top row
+        b_row = min(location(1)+mid_feat,M);        % bottom row
         l_col = max(location(2)-mid_feat+1,1);      % left column
-        r_col = min(location(2)+mid_feat,N);    % right column
+        r_col = min(location(2)+mid_feat,N);        % right column
         feature_window = edges(t_row:b_row, l_col:r_col);
         
 %         imagesc(feature_window);

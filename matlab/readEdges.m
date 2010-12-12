@@ -11,3 +11,4 @@ Z = fread(fp,size(1)*size(2),'uint8');
 Z = reshape(Z,size(1),size(2));
 
 %imagesc(Z)
+fclose(fp);
