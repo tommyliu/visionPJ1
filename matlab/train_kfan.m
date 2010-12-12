@@ -13,6 +13,7 @@ distances = part_locations - repmat(part_locations(1,:,:), [num_parts,1,1]);
 for i=1:num_parts
     dist_i = distances(i,:,:);
     dist_i = squeeze(dist_i)';
+    %dist_i = dist_i(:,[2,1]);
     sigma(:,:,i) = cov(dist_i);
     mu(i,:) = mean(dist_i);
 end
