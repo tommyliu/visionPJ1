@@ -3,7 +3,8 @@ function [best_cost,best_locations] = kfan_matching(costmaps, sigma, mu)
 [h,w,num_k] = size(costmaps);
 dist_part = 1;
 
-dt_images = costmaps;%Something something sigma
+dt_images = distance_transform(costmaps,sigma);%Something something sigma
+
 
 best_cost = -1e100;
 for i=1:h
